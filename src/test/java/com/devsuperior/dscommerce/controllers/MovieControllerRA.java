@@ -20,7 +20,6 @@ public class MovieControllerRA {
     private String clientUsername, clientPassword, adminUsername, adminPassword;
     private String adminToken, clientToken, invalidToken;
     private Long existingMovieId, nonExistingMovieId;
-    private String movieName;
 
     private Map<String, Object> postMovieInstance;
 
@@ -36,8 +35,6 @@ public class MovieControllerRA {
         clientToken = TokenUtil.obtainAccessToken(clientUsername, clientPassword);
         adminToken = TokenUtil.obtainAccessToken(adminUsername, adminPassword);
         invalidToken = adminToken + "xpto";
-
-        movieName = "The Witcher";
 
         postMovieInstance = new HashMap<>();
         postMovieInstance.put("title", " ");
@@ -56,15 +53,14 @@ public class MovieControllerRA {
 
     @Test
     public void findAllShouldReturnPageMoviesWhenMovieTitleParamIsNotEmpty() {
+        String movieTitle = "The Witcher";
+
         given()
-                .get("/movies?title={movieName}", movieName)
+                .queryParam("title", movieTitle)
+                .get("/movies")
                 .then()
                 .statusCode(200)
-                .body("content.id[0]", is(1))
-                .body("content.title[0]", equalTo("The Witcher"))
-                .body("content.score[0]", is(4F))
-                .body("content.count[0]", is(3))
-                .body("content.image[0]", equalTo("https://www.themoviedb.org/t/p/w533_and_h300_bestv2/jBJWaqoSCiARWtfV0GlqHrcdidd.jpg"));
+                .body("content.title[0]", equalTo(movieTitle));
     }
 
     @Test

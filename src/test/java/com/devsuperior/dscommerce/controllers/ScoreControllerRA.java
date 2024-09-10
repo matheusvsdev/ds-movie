@@ -2,7 +2,6 @@ package com.devsuperior.dscommerce.controllers;
 
 import static io.restassured.RestAssured.baseURI;
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.equalTo;
 
 import com.devsuperior.dscommerce.tests.TokenUtil;
 import io.restassured.http.ContentType;
@@ -16,56 +15,84 @@ import java.util.Map;
 
 public class ScoreControllerRA {
 
-    private String clientUsername, clientPassword, adminUsername, adminPassword;
-    private String adminToken, clientToken;
+    private String adminUsername, adminPassword;
+    private String adminToken;
     private Long existingMovieId, nonExistingMovieId;
-    private String movieName;
 
-    private Map<String, Object> putScoreInstance;
+    private Map<String, Object> scoreRequestBody;
 
     @BeforeEach
     public void setup() throws JSONException {
         baseURI = "http://localhost:8080";
 
-        clientUsername = "joao@gmail.com";
-        clientPassword = "123456";
         adminUsername = "alex@gmail.com";
         adminPassword = "123456";
 
-        clientToken = TokenUtil.obtainAccessToken(clientUsername, clientPassword);
         adminToken = TokenUtil.obtainAccessToken(adminUsername, adminPassword);
 
+        existingMovieId = 1L;
         nonExistingMovieId = 100L;
 
-        putScoreInstance = new HashMap<>();
-        putScoreInstance.put("movieId", 1L);
-        putScoreInstance.put("score", 4.0);
+        scoreRequestBody = new HashMap<>();
+        scoreRequestBody.put("movieId", 1L);
+        scoreRequestBody.put("score", 4.0);
     }
 
     @Test
     public void saveScoreShouldReturnNotFoundWhenMovieIdDoesNotExist() throws Exception {
-        putScoreInstance.put("movieId", nonExistingMovieId);
-        JSONObject newScore = new JSONObject(putScoreInstance);
+        scoreRequestBody.put("movieId", nonExistingMovieId);
+        scoreRequestBody.put("score", 4.0);
+
+        JSONObject newScore = new JSONObject(scoreRequestBody);
 
         given()
                 .header("Content-type", "application/json")
-                .header("Authorization", "Bearer " + clientToken)
+                .header("Authorization", "Bearer " + adminToken)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .body(newScore)
                 .when()
-                .post("/scores")
+                .put("/scores")
                 .then()
                 .statusCode(404);
     }
 
     @Test
     public void saveScoreShouldReturnUnprocessableEntityWhenMissingMovieId() throws Exception {
+        scoreRequestBody.clear();
+        scoreRequestBody.put("score", 4.0);
+
+        JSONObject newScore = new JSONObject(scoreRequestBody);
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .body(newScore)
+                .when()
+                .put("/scores")
+                .then()
+                .statusCode(422);
 
     }
 
     @Test
     public void saveScoreShouldReturnUnprocessableEntityWhenScoreIsLessThanZero() throws Exception {
+        scoreRequestBody.put("movieId", existingMovieId);
+        scoreRequestBody.put("score", -10.0);
 
+        JSONObject newScore = new JSONObject(scoreRequestBody);
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .body(newScore)
+                .when()
+                .put("/scores")
+                .then()
+                .statusCode(422);
     }
 }
